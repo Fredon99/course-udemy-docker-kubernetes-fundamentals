@@ -1,0 +1,13 @@
+services:
+  joke-api-python:
+    image: joke-api-python:dev
+    build:
+      context: ./joke_api_python
+      dockerfile: Dockerfile
+    container_name: joke-api-python
+    command: ["fastapi", "dev", "main.py", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./joke_api_python/src:/app  #Volume for hot-reloading
+    restart: unless-stopped

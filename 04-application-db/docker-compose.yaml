@@ -1,0 +1,55 @@
+services:
+
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    networks:
+      - postgres_default
+    ports:
+      - 5435:5432
+    volumes:
+      - postgres_volume:/var/lib/postgresql/data
+      - ./postgres_init:/docker-entrypoint-initdb.d:ro
+
+  joke-api-python:
+    image: joke-api-python:2
+    build:
+      context: ./joke_api_python
+      dockerfile: Dockerfile
+    container_name: joke-api-python
+    command: ["fastapi", "run", "main.py", "--host", "0.0.0.0", "--port", "8000"]
+    networks:
+      - postgres_default
+    environment:
+      POSTGRES_URL: ${POSTGRES_URL}
+    ports:
+      - 8000:8000
+    volumes:
+      - ./joke_api_python/src:/app  #Volume for hot-reloading
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+networks:
+  postgres_default:
+    name: postgres_default
+    external: false
+
+volumes:
+  postgres_volume:
+    driver: local
+    name: postgres_volume_04
+    driver_opts:
+      type: none
+      o: bind
+      device: ./postgres_volume

@@ -1,0 +1,52 @@
+version: "3"
+
+services:
+
+  scylla-node1:
+    container_name: scylla-node1
+    image: scylladb/scylla:5.2.0
+    restart: always
+    command: --seeds=scylla-node1,scylla-node2 --smp 1 --memory 750M --overprovisioned 1 --api-address 0.0.0.0
+    networks:
+      scylla-net:
+    volumes:
+      - scylla-node1-data:/var/lib/scylla
+      - ./scylla_config/scylla.yaml:/etc/scylla/scylla.yaml
+    ports:
+      - "9042:9042"  # CQL port
+      - "7000:7000"  # Internal communication port
+      - "7001:7001"  # SSL port for internal communication
+      - "7199:7199"  # JMX port for monitoring
+      - "9180:9180"  # REST API port (if used)
+
+  scylla-node2:
+    container_name: scylla-node2
+    image: scylladb/scylla:5.2.0
+    restart: always
+    command: --seeds=scylla-node1,scylla-node2 --smp 1 --memory 750M --overprovisioned 1 --api-address 0.0.0.0
+    networks:
+      scylla-net:
+    volumes:
+      - scylla-node2-data:/var/lib/scylla
+      - ./scylla_config/scylla.yaml:/etc/scylla/scylla.yaml
+      
+networks:
+  scylla-net:
+    driver: bridge
+
+volumes:
+  scylla-node1-data:
+    driver: local
+    name: scylla-node1-data
+    driver_opts:
+      type: none
+      o: bind
+      device: ./scylla-node1-data
+
+  scylla-node2-data:
+    driver: local
+    name: scylla-node2-data
+    driver_opts:
+      type: none
+      o: bind
+      device: ./scylla-node2-data

@@ -1,0 +1,19 @@
+services:
+
+  streamlit_app:
+    build: ./streamlit_app
+    networks:
+      - scylla_cluster_scylla-net
+    environment:
+      SCYLLA_IP: scylla-node1
+
+  python_ingestion:
+    build: ./python_ingestion
+    networks:
+      - scylla_cluster_scylla-net
+    environment:
+      SCYLLA_IP: scylla-node1
+    
+networks:
+  scylla_cluster_scylla-net:
+    external: true
