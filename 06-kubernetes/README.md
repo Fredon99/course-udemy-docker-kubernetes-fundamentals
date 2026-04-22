@@ -51,6 +51,13 @@ flowchart LR
 
 ```text
 06-kubernetes/
+├── docs/
+│   └── assets/                  # Imagens da documentacao
+│       ├── kubernetes-introduction.png
+│       ├── kubernetes-pod-example.png
+│       ├── kubernetes-services-overview.png
+│       ├── kubernetes-manifests-overview.png
+│       └── project-architecture-overview.png
 ├── cluster/
 │   ├── config.yaml               # Configuração do cluster kind (1 control-plane + 2 workers)
 │   └── create_namespace.yaml     # Namespace jokeapi
@@ -70,6 +77,21 @@ flowchart LR
 │   ├── requirements.txt
 │   └── src/main.py
 └── hostdir/                      # Montado nos workers via kind extraMounts
+```
+
+## Imagens da documentacao
+
+- Pasta padrao: `docs/assets`
+- Nome padrao: `context-topic-purpose.png` (kebab-case, sem espacos e sem acentos)
+
+Exemplos de uso no markdown:
+
+```markdown
+![O que e Kubernetes](docs/assets/kubernetes-introduction.png)
+![Meu primeiro Pod](docs/assets/kubernetes-pod-example.png)
+![Services no Kubernetes](docs/assets/kubernetes-services-overview.png)
+![Manifestos Kubernetes](docs/assets/kubernetes-manifests-overview.png)
+![Arquitetura do projeto](docs/assets/project-architecture-overview.png)
 ```
 
 ## Pré-requisitos
