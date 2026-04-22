@@ -35,6 +35,18 @@ Implantação completa da Joke API com PostgreSQL em um cluster Kubernetes local
 2. A **Joke API** serve as piadas armazenadas no banco via endpoint REST.
 3. O PostgreSQL persiste os dados em um **PersistentVolume** montado no `hostPath` dos workers (`/mnt/hostdir`).
 
+```mermaid
+flowchart LR
+    A[CronJob job-request-joke] -->|a cada 1 min| B[Job Pod]
+    B -->|GET random joke| C[Chuck Norris API]
+    B -->|INSERT joke| D[(PostgreSQL)]
+    D -->|grava em| E[PVC joke-database-pvc]
+    E --> F[PV hostPath /mnt/hostdir/postgresql]
+    G[Cliente] -->|HTTP GET /joke| H[Joke API Service NodePort]
+    H --> I[Joke API Pod]
+    I -->|SELECT jokes| D
+```
+
 ## Estrutura
 
 ```text
