@@ -79,20 +79,13 @@ flowchart LR
 └── hostdir/                      # Montado nos workers via kind extraMounts
 ```
 
-## Imagens da documentacao
+## Fundamentos Kubernetes
 
-- Pasta padrao: `docs/assets`
-- Nome padrao: `context-topic-purpose.png` (kebab-case, sem espacos e sem acentos)
-
-Exemplos de uso no markdown:
-
-```markdown
-![O que e Kubernetes](docs/assets/kubernetes-introduction.png)
-![Meu primeiro Pod](docs/assets/kubernetes-pod-example.png)
-![Services no Kubernetes](docs/assets/kubernetes-services-overview.png)
-![Manifestos Kubernetes](docs/assets/kubernetes-manifests-overview.png)
-![Arquitetura do projeto](docs/assets/project-architecture-overview.png)
-```
+- [O que e Kubernetes](docs/assets/kubernetes-introduction.png)
+- [Meu primeiro Pod](docs/assets/kubernetes-pod-example.png)
+- [Services no Kubernetes](docs/assets/kubernetes-services-overview.png)
+- [Manifestos Kubernetes](docs/assets/kubernetes-manifests-overview.png)
+- [Arquitetura do projeto](docs/assets/project-architecture-overview.png)
 
 ## Pré-requisitos
 
