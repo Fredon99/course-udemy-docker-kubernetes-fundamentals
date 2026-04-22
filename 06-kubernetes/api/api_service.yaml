@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: jokeapi
+  name: joke-api-svc
+  labels:
+    app: joke-api
+spec:
+  type: NodePort
+  ports:
+    - port: 8000
+  selector:
+    app: joke-api

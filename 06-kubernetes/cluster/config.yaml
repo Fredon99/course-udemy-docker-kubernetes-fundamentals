@@ -1,0 +1,12 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+- role: worker
+  extraMounts:
+    - hostPath: /home/grc/udemy/parte_7/hostdir
+      containerPath: /mnt/hostdir
+- role: worker
+  extraMounts:
+    - hostPath: /home/grc/udemy/parte_7/hostdir
+      containerPath: /mnt/hostdir

@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: jokeapi
+  name: joke-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: joke-api
+  template:
+    metadata:
+      labels:
+        app: joke-api
+    spec:
+      containers:
+        - name: joke-api
+          image: gabrielrichter/joke_api_python:2
+          imagePullPolicy: IfNotPresent
+          env:
+          - name: POSTGRES_URL
+            value: postgresql://admin123:admin123@joke-database-svc/prod
+          ports:
+            - containerPort: 8000
