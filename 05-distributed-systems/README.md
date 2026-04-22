@@ -1,14 +1,14 @@
-# Distributed Systems - Minecraft Event Tracking
+# Sistemas Distribuídos - Rastreamento de Eventos Minecraft
 
-A distributed system that simulates real-time Minecraft player session tracking. It combines a ScyllaDB cluster for high-throughput writes, a Python service that continuously generates and inserts synthetic game events, and a Streamlit dashboard for live visualization.
+Sistema distribuído que simula o rastreamento em tempo real de sessões de jogadores de Minecraft. Combina um cluster ScyllaDB para escritas de alta performance, um serviço Python que gera e insere eventos sintéticos continuamente, e um dashboard Streamlit para visualização ao vivo.
 
 ---
 
-## Architecture
+## Arquitetura
 
 ```
                         +---------------------------+
-                        |     ScyllaDB Cluster      |
+                        |     Cluster ScyllaDB      |
                         |                           |
                         |  scylla-node1 (seed)      |
                         |  scylla-node2 (seed)      |
@@ -23,33 +23,33 @@ A distributed system that simulates real-time Minecraft player session tracking.
 +-------------+-----------+               +----------------+-----------+
 |   python_data_writer    |               |      streamlit_app         |
 |                         |               |                            |
-|  Generates synthetic    |               |  Reads events from         |
-|  player session events  |               |  ScyllaDB every 5s and     |
-|  (connected, login,     |               |  renders live metrics:     |
-|   disconnected) and     |               |  - Online players          |
-|  inserts into ScyllaDB  |               |  - Event counts            |
-|  using 3 threads        |               |  - Last login time         |
+|  Gera eventos sintéticos|               |  Lê eventos do ScyllaDB   |
+|  de sessão de jogadores |               |  a cada 5s e exibe         |
+|  (connected, login,     |               |  métricas ao vivo:         |
+|   disconnected) e       |               |  - Jogadores online        |
+|  insere no ScyllaDB     |               |  - Contagem de eventos     |
+|  com 3 threads          |               |  - Último login            |
 +-------------------------+               +----------------------------+
 ```
 
-### Data Flow
+### Fluxo de Dados
 
-1. `python_data_writer` generates player session events at random intervals using three concurrent threads.
-2. Each event is inserted into the `eventdb.events` table in the ScyllaDB cluster.
-3. `streamlit_app` queries the last 4 hours of events every 5 seconds and displays live metrics on a web dashboard.
+1. `python_data_writer` gera eventos de sessão de jogadores em intervalos aleatórios usando três threads concorrentes.
+2. Cada evento é inserido na tabela `eventdb.events` do cluster ScyllaDB.
+3. `streamlit_app` consulta as últimas 4 horas de eventos a cada 5 segundos e exibe métricas ao vivo no dashboard.
 
 ---
 
-## Services
+## Serviços
 
-| Service | Description | Tech |
+| Serviço | Descrição | Tecnologia |
 |---|---|---|
-| scylla-node1 | Primary ScyllaDB node (seed) | ScyllaDB 5.2 |
-| scylla-node2 | Secondary ScyllaDB node (seed) | ScyllaDB 5.2 |
-| python_data_writer | Generates and writes synthetic game events | Python 3.10, cassandra-driver |
-| streamlit_app | Live dashboard for event visualization | Python 3.10, Streamlit, Plotly |
+| scylla-node1 | Nó primário do ScyllaDB (seed) | ScyllaDB 5.2 |
+| scylla-node2 | Nó secundário do ScyllaDB (seed) | ScyllaDB 5.2 |
+| python_data_writer | Gera e grava eventos sintéticos de jogo | Python 3.10, cassandra-driver |
+| streamlit_app | Dashboard ao vivo para visualização de eventos | Python 3.10, Streamlit, Plotly |
 
-### ScyllaDB Schema
+### Schema do ScyllaDB
 
 ```cql
 CREATE KEYSPACE IF NOT EXISTS eventdb
@@ -65,26 +65,26 @@ CREATE TABLE IF NOT EXISTS eventdb.events (
 );
 ```
 
-### Event Types
+### Tipos de Evento
 
-| Action | Meaning |
+| Ação | Significado |
 |---|---|
-| connected | Player connected to the server |
-| login success | Player authenticated successfully |
-| login fail | Player failed authentication |
-| disconnected | Player left the server |
+| connected | Jogador conectou ao servidor |
+| login success | Jogador autenticou com sucesso |
+| login fail | Jogador falhou na autenticação |
+| disconnected | Jogador saiu do servidor |
 
 ---
 
-## Project Structure
+## Estrutura do Projeto
 
 ```
 05-distributed-systems/
-├── docker-compose.yaml          # App services (streamlit + data writer)
-├── start.sh                     # Brings up the full environment in order
-├── stop.sh                      # Tears down all services
+├── docker-compose.yaml          # Serviços da aplicação (streamlit + data writer)
+├── start.sh                     # Sobe todo o ambiente na ordem correta
+├── stop.sh                      # Derruba todos os serviços
 ├── python_data_writer/
-│   ├── data_gen.py              # Event generator and ScyllaDB writer
+│   ├── data_gen.py              # Gerador de eventos e escritor no ScyllaDB
 │   ├── Dockerfile
 │   └── requirements.txt
 ├── streamlit_app/
@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS eventdb.events (
 │   ├── Dockerfile
 │   └── requirements.txt
 └── scylla_cluster/
-    ├── docker-compose.yaml      # ScyllaDB 2-node cluster
+    ├── docker-compose.yaml      # Cluster ScyllaDB com 2 nós
     ├── scylla_config/
     │   └── scylla.yaml
     ├── scylla-node1-data/
@@ -101,38 +101,38 @@ CREATE TABLE IF NOT EXISTS eventdb.events (
 
 ---
 
-## Running the Environment
+## Como Executar
 
-### Start
+### Subir o ambiente
 
 ```bash
 chmod +x start.sh stop.sh
-./start.sh [writer_replicas]
+./start.sh [replicas_writer]
 ```
 
-The optional `writer_replicas` argument sets how many `python_data_writer` containers to run in parallel. Defaults to `1` if omitted.
+O argumento opcional `replicas_writer` define quantos containers `python_data_writer` rodarão em paralelo. O padrão é `1`.
 
 ```bash
-./start.sh    # 1 python_data_writer (default)
-./start.sh 3  # 3 python_data_writers writing concurrently
+./start.sh    # 1 python_data_writer (padrão)
+./start.sh 3  # 3 python_data_writers gravando concorrentemente
 ```
 
-The script:
-1. Starts the ScyllaDB cluster.
-2. Polls `nodetool status` until both nodes report `UN` (Up/Normal).
-3. Starts `python_data_writer` and `streamlit_app`.
+O script:
+1. Sobe o cluster ScyllaDB.
+2. Aguarda via `nodetool status` até ambos os nós reportarem `UN` (Up/Normal).
+3. Sobe o `python_data_writer` e o `streamlit_app`.
 
-### Stop
+### Parar o ambiente
 
 ```bash
 ./stop.sh
 ```
 
-The script stops the application services first, then the ScyllaDB cluster.
+O script para os serviços da aplicação primeiro e depois o cluster ScyllaDB.
 
-### Streamlit Dashboard
+### Dashboard Streamlit
 
-After startup, access the dashboard at:
+Após a subida, acesse o dashboard em:
 
 ```
 http://localhost:8501
@@ -140,6 +140,6 @@ http://localhost:8501
 
 ---
 
-## Networking
+## Rede
 
-The application services connect to the ScyllaDB cluster through an external Docker network named `scylla_cluster_scylla-net`, created automatically by the `scylla_cluster` compose project. This is why the cluster must be running before the application services start.
+Os serviços da aplicação se conectam ao cluster ScyllaDB através de uma rede Docker externa chamada `scylla_cluster_scylla-net`, criada automaticamente pelo projeto compose do `scylla_cluster`. Por isso o cluster precisa estar em execução antes de subir os serviços da aplicação.
