@@ -7,12 +7,22 @@ from datetime import datetime
 
 from cassandra.cluster import Cluster
 
-cluster = Cluster(
-    contact_points=[ os.getenv("SCYLLA_IP") ],
+def connect_with_retry(contact_points, port, retries=10, interval=5):
+    for attempt in range(1, retries + 1):
+        try:
+            cluster = Cluster(contact_points=contact_points, port=port)
+            session = cluster.connect()
+            print(f"Connected to ScyllaDB on attempt {attempt}.")
+            return session
+        except Exception as e:
+            print(f"Attempt {attempt}/{retries}: ScyllaDB not ready ({e}). Retrying in {interval}s...")
+            sleep(interval)
+    raise RuntimeError("Could not connect to ScyllaDB after multiple retries.")
+
+session = connect_with_retry(
+    contact_points=[os.getenv("SCYLLA_IP")],
     port=9042,
 )
-
-session = cluster.connect()
 
 query = """
 INSERT INTO eventdb.events (id, parent_id, timestamp, action, event_date)

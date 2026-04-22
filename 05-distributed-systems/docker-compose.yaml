@@ -7,8 +7,8 @@ services:
     environment:
       SCYLLA_IP: scylla-node1
 
-  python_ingestion:
-    build: ./python_ingestion
+  python_data_writer:
+    build: ./python_data_writer
     networks:
       - scylla_cluster_scylla-net
     environment:
