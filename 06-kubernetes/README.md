@@ -68,6 +68,18 @@ Implantação completa da Joke API com PostgreSQL em um cluster Kubernetes local
 
 ## Como executar
 
+### 0. Ajustar o path local no config do cluster
+
+Antes de criar o cluster, ajuste o `hostPath` em `cluster/config.yaml` para o caminho local deste projeto na sua maquina.
+
+Exemplo:
+
+```yaml
+extraMounts:
+    - hostPath: /seu/caminho/06-kubernetes/hostdir
+        containerPath: /mnt/hostdir
+```
+
 ### 1. Criar o cluster kind
 
 ```bash
@@ -130,6 +142,113 @@ curl http://<NODE_IP>:<NODE_PORT>/joke/
 
 ```bash
 kind delete cluster --name jokeapi-cluster
+```
+
+## Comandos mais usados no Kubernetes
+
+### Contexto e namespace
+
+```bash
+# Ver contexto atual do kubectl
+kubectl config current-context
+
+# Listar contexts
+kubectl config get-contexts
+
+# Definir namespace padrao para o contexto atual
+kubectl config set-context --current --namespace=jokeapi
+```
+
+### Recursos principais
+
+```bash
+# Ver tudo no namespace
+kubectl get all -n jokeapi
+
+# Ver pods com mais detalhes
+kubectl get pods -n jokeapi -o wide
+
+# Acompanhar mudancas em tempo real
+kubectl get pods -n jokeapi -w
+
+# Ver services, deployments e jobs
+kubectl get svc,deploy,job,cronjob -n jokeapi
+```
+
+### Logs e diagnostico
+
+```bash
+# Logs de um deployment (stream)
+kubectl logs -f deployment/joke-api -n jokeapi
+
+# Logs do postgres
+kubectl logs -f deployment/joke-database -n jokeapi
+
+# Descrever pod (eventos, erros, probes, etc.)
+kubectl describe pod <POD_NAME> -n jokeapi
+
+# Ver eventos recentes do namespace
+kubectl get events -n jokeapi --sort-by=.metadata.creationTimestamp
+```
+
+### Aplicar mudancas
+
+```bash
+# Aplicar um manifesto
+kubectl apply -f api/api_deployment.yaml
+
+# Reaplicar tudo por pasta
+kubectl apply -f api/
+
+# Ver diff antes de aplicar
+kubectl diff -f api/
+```
+
+### Reinicio e escala
+
+```bash
+# Reiniciar rollout da API
+kubectl rollout restart deployment/joke-api -n jokeapi
+
+# Ver status do rollout
+kubectl rollout status deployment/joke-api -n jokeapi
+
+# Escalar replicas da API
+kubectl scale deployment/joke-api --replicas=2 -n jokeapi
+```
+
+### Executar comandos dentro do pod
+
+```bash
+# Abrir shell em um pod
+kubectl exec -it <POD_NAME> -n jokeapi -- sh
+
+# Testar conexao com a API a partir de um pod temporario
+kubectl run curltmp --rm -it --restart=Never -n jokeapi --image=curlimages/curl -- \
+    curl -s http://joke-api-svc:8000/joke/
+```
+
+### Port-forward (acesso local rapido)
+
+```bash
+# Expor a API localmente em localhost:8000
+kubectl port-forward -n jokeapi svc/joke-api-svc 8000:8000
+
+# Em outro terminal
+curl http://127.0.0.1:8000/joke/
+```
+
+### Limpeza de recursos
+
+```bash
+# Deletar um recurso especifico
+kubectl delete -f job/job_request_new_joke.yaml
+
+# Deletar todos os recursos de uma pasta
+kubectl delete -f api/
+
+# Deletar namespace inteiro (remove tudo dentro)
+kubectl delete namespace jokeapi
 ```
 
 ## Manifests resumidos

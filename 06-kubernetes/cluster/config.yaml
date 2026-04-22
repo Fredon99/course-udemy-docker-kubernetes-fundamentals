@@ -4,9 +4,9 @@ nodes:
 - role: control-plane
 - role: worker
   extraMounts:
-    - hostPath: /home/grc/udemy/parte_7/hostdir
+    - hostPath: /home/fred/Documents/workspace/course-udemy-docker-kubernetes-fundamentals/06-kubernetes/hostdir
       containerPath: /mnt/hostdir
 - role: worker
   extraMounts:
-    - hostPath: /home/grc/udemy/parte_7/hostdir
+    - hostPath: /home/fred/Documents/workspace/course-udemy-docker-kubernetes-fundamentals/06-kubernetes/hostdir
       containerPath: /mnt/hostdir
