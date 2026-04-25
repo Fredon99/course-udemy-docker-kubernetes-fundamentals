@@ -76,7 +76,10 @@ flowchart LR
 │   ├── Dockerfile
 │   ├── requirements.txt
 │   └── src/main.py
-└── hostdir/                      # Montado nos workers via kind extraMounts
+├── hostdir/                      # Montado nos workers via kind extraMounts (gitignored)
+├── build-images.sh               # Build das imagens locais e carga no cluster kind
+├── create-volumes.sh             # Cria o diretório hostdir/postgresql antes de subir o cluster
+└── delete-volumes.sh             # Remove o diretório hostdir/postgresql
 ```
 
 ## Fundamentos Kubernetes
@@ -95,7 +98,7 @@ flowchart LR
 
 ## Como executar
 
-### 0. Ajustar o path local no config do cluster
+### 1. Ajustar o path local no config do cluster
 
 Antes de criar o cluster, ajuste o `hostPath` em `cluster/config.yaml` para o caminho local deste projeto na sua maquina.
 
@@ -107,52 +110,77 @@ extraMounts:
         containerPath: /mnt/hostdir
 ```
 
-### 1. Criar o cluster kind
+### 2. Criar o diretório de volume
+
+O kind monta o `extraMounts` no momento da criação do cluster, portanto o diretório precisa existir antes:
+
+```bash
+./create-volumes.sh
+```
+
+### 3. Criar o cluster kind
 
 ```bash
 kind create cluster --config cluster/config.yaml --name jokeapi-cluster
 ```
 
-### 2. Criar o Namespace
+### 4. Fazer o build das imagens e carregá-las no cluster
+
+Kubernetes não executa `docker build`. As imagens precisam ser construídas localmente e injetadas no cluster com `kind load docker-image`:
+
+```bash
+./build-images.sh
+```
+
+Isso faz o build de `joke-api-python:k8s` e `joke-job-request:k8s`. Os deployments usam `imagePullPolicy: Never`, garantindo que o Kubernetes nunca tente buscar essas imagens na internet.
+
+Para recarregar após alterar o código:
+
+```bash
+./build-images.sh
+kubectl rollout restart deployment -n jokeapi
+```
+
+### 5. Criar o Namespace
 
 ```bash
 kubectl apply -f cluster/create_namespace.yaml
 ```
 
-### 3. Criar PersistentVolume e PVC
+### 6. Criar PersistentVolume e PVC
 
 ```bash
 kubectl apply -f postgres/database_pv_pvc.yaml
 ```
 
-### 4. Subir o PostgreSQL
+### 7. Subir o PostgreSQL
 
 ```bash
 kubectl apply -f postgres/database_deployment.yaml
 kubectl apply -f postgres/database_service.yaml
 ```
 
-### 5. Subir a API
+### 8. Subir a API
 
 ```bash
 kubectl apply -f api/api_deployment.yaml
 kubectl apply -f api/api_service.yaml
 ```
 
-### 6. Criar o CronJob
+### 9. Criar o CronJob
 
 ```bash
 kubectl apply -f job/job_request_new_joke.yaml
 ```
 
-### 7. Verificar os recursos
+### 10. Verificar os recursos
 
 ```bash
 kubectl get all -n jokeapi
 kubectl get pv,pvc -n jokeapi
 ```
 
-### 8. Acessar a API
+### 11. Acessar a API
 
 ```bash
 # Obter a porta NodePort alocada
@@ -169,6 +197,7 @@ curl http://<NODE_IP>:<NODE_PORT>/joke/
 
 ```bash
 kind delete cluster --name jokeapi-cluster
+./delete-volumes.sh
 ```
 
 ## Comandos mais usados no Kubernetes
@@ -296,3 +325,124 @@ kubectl delete namespace jokeapi
 - As credenciais do banco (`admin123`) estão hardcoded nos manifests por ser um ambiente de estudo. Em produção, use **Kubernetes Secrets**.
 - O `hostPath` do PV aponta para `/mnt/hostdir/postgresql`, que é montado nos workers via `extraMounts` no `config.yaml` do kind.
 - O CronJob mantém no máximo 2 execuções bem-sucedidas e 2 com falha no histórico (`successfulJobsHistoryLimit: 2`, `failedJobsHistoryLimit: 2`).
+
+
+---
+
+## Arquitetura Detalhada (Deep Dive)
+
+Este projeto simula um sistema real distribuído rodando em Kubernetes, com separação clara de responsabilidades:
+
+### Componentes
+
+| Camada | Recurso | Responsabilidade |
+|------|--------|----------------|
+| Orquestração | Kubernetes (kind) | Gerenciar containers, rede e estado |
+| Compute | Deployments | Manter API e banco rodando |
+| Batch | CronJob | Executar tarefas periódicas |
+| Rede | Services | Descoberta e comunicação entre serviços |
+| Storage | PV + PVC | Persistência de dados |
+| Infra local | hostPath | Simulação de disco persistente |
+
+---
+
+## Fluxo End-to-End
+
+### 1. Ingestão de dados (Batch)
+
+```text
+CronJob → cria Job → cria Pod
+        ↓
+Container executa script
+        ↓
+Chama API externa (Chuck Norris)
+        ↓
+Insere no PostgreSQL
+```
+
+---
+
+### 2. Persistência
+
+```text
+PostgreSQL Pod
+      ↓
+/var/lib/postgresql/data
+      ↓
+VolumeMount
+      ↓
+PVC (postgres-pvc)
+      ↓
+PV (hostPath)
+      ↓
+Disco local (/mnt/hostdir/postgresql)
+```
+
+---
+
+### 3. Consumo via API
+
+```text
+Cliente (curl / browser)
+        ↓
+NodePort Service
+        ↓
+joke-api Pod
+        ↓
+SELECT no PostgreSQL
+        ↓
+Resposta HTTP
+```
+
+---
+
+## Como tudo se conecta (visão mental)
+
+```text
+Kubernetes
+│
+├── API
+├── PostgreSQL
+└── CronJob
+```
+
+---
+
+## Ordem correta de subida
+
+```text
+1. Cluster
+2. Namespace
+3. Storage
+4. Banco
+5. API
+6. Job
+```
+
+---
+
+## Ciclo de vida de uma requisição
+
+```text
+CronJob → Banco → API → Cliente
+```
+
+---
+
+## Debug mental
+
+- API não responde → Pod / Service
+- Banco falha → PVC / Service
+- Job falha → logs
+
+---
+
+## Mapa mental final
+
+```text
+Deployment → Pods
+Service → Rede
+PVC → Storage
+CronJob → Execução
+Namespace → Organização
+```

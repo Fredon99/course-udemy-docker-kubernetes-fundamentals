@@ -1,0 +1,22 @@
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Credentials e variáveis de ambiente
+.env
+
+# Dados de volumes Docker — diretórios criados em tempo de execução pelos scripts start/run
+03-postgres-volumes/psql_db/
+03-postgres-volumes/postgres_volume/
+04-application-db/postgres_volume/
+05-distributed-systems/scylla_cluster/scylla-node1-data/
+05-distributed-systems/scylla_cluster/scylla-node2-data/
+
+# Dados do PersistentVolume hostPath do Kubernetes
+06-kubernetes/hostdir/postgresql/
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db

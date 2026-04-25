@@ -4,7 +4,7 @@ metadata:
   namespace: jokeapi
   name: joke-api
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: joke-api
@@ -15,8 +15,8 @@ spec:
     spec:
       containers:
         - name: joke-api
-          image: gabrielrichter/joke_api_python:2
-          imagePullPolicy: IfNotPresent
+          image: joke-api-python:k8s
+          imagePullPolicy: Never
           env:
           - name: POSTGRES_URL
             value: postgresql://admin123:admin123@joke-database-svc/prod

@@ -1,5 +1,4 @@
 FROM python:3.10-slim
-LABEL Gabriel Richter
 
 COPY streamlit_minecraft_logs.py ./streamlit_minecraft_logs.py
 COPY requirements.txt ./requirements.txt

@@ -4,7 +4,7 @@ metadata:
   name: job-request-joke
   namespace: jokeapi
 spec:
-  schedule: "* * * * *"
+  schedule: "*/2 * * * *"
   successfulJobsHistoryLimit: 2
   failedJobsHistoryLimit: 2
   jobTemplate:
@@ -13,8 +13,8 @@ spec:
         spec:
           containers:
           - name: job-request-joke
-            image: gabrielrichter/api_joke_request_to_postgres:1
-            imagePullPolicy: IfNotPresent
+            image: joke-job-request:k8s
+            imagePullPolicy: Never
             env:
             - name: POSTGRES_URL
               value: postgresql://admin123:admin123@joke-database-svc/prod
