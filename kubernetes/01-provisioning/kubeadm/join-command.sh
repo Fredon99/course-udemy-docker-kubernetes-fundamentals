@@ -1,0 +1,1 @@
+kubeadm join 192.168.56.101:6443 --token tj2g46.fxp48b18c348znzv --discovery-token-ca-cert-hash sha256:0e2c3c68e8c8e170d1557e4e81ef7f5c2d034a24e5ec78cd2b625f03f3e73491  --cri-socket unix:///run/containerd/containerd.sock

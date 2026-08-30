@@ -1,0 +1,44 @@
+Vagrant.configure("2") do |config|
+  BOX = "bento/ubuntu-22.04"
+
+  # Rede privada usada pelo Kubernetes/Flannel.
+  # A primeira interface do VirtualBox continua sendo NAT para acesso à Internet.
+  NODES = {
+    "master-1" => { ip: "192.168.56.101", cpus: 2, memory: 2048, role: :master },
+    "worker-1" => { ip: "192.168.56.201", cpus: 1, memory: 2048, role: :worker },
+    "worker-2" => { ip: "192.168.56.202", cpus: 1, memory: 2048, role: :worker }
+  }
+
+  config.vm.box_check_update = false
+
+  NODES.each do |name, node_cfg|
+    config.vm.define name do |node|
+      node.vm.box = BOX
+      node.vm.hostname = name
+      node.vm.network "private_network", ip: node_cfg[:ip]
+
+      # Usa a chave padrão do Vagrant. Não depende de ~/.ssh/id_rsa ou ~/.ssh/vagrant.
+      node.ssh.insert_key = false
+
+      node.vm.provider "virtualbox" do |vb|
+        vb.gui = false
+        vb.cpus = node_cfg[:cpus]
+        vb.memory = node_cfg[:memory]
+
+        # Workaround para problemas de DNS do NAT do VirtualBox.
+        vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+        vb.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+      end
+
+      # Primeiro corrige DNS; depois instala/configura containerd + Kubernetes.
+      node.vm.provision "shell", privileged: true, path: "prepare-vm.sh"
+      node.vm.provision "shell", privileged: true, path: "common.sh"
+
+      if node_cfg[:role] == :master
+        node.vm.provision "shell", privileged: true, path: "master.sh"
+      else
+        node.vm.provision "shell", privileged: true, path: "worker.sh"
+      end
+    end
+  end
+end
