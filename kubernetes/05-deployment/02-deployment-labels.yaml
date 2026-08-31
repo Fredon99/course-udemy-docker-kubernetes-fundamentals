@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx-development
+    environment: development
+  name: nginx
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: nginx-test
+  template:
+    metadata:
+      labels:
+        app: nginx-test
+    spec:
+      containers:
+      - image: nginx
+        name: nginx
+
+# The selector.matchLabels and template.metadata.labels must match for the deployment to work correctly.
+# In this case, they both have app: nginx-test.

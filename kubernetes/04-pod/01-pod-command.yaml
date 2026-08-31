@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: terraform-demo
+  labels:
+    run: terraform-demo
+spec:
+  containers:
+  - name: terraform-demo
+    image: hashicorp/terraform:latest
+    command:
+    - "sleep"
+    - "9999999999999"
+
+# Changed the command to sleep for a long time so that the pod doesn't exit immediately.
+# This allows us to exec with the command `kubectl exec -it terraform-demo -- /bin/sh` to get a shell inside the container.
+
+# kubectl apply -f pod.yaml
+# kubectl get pods
+# kubectl describe pod terraform-demo

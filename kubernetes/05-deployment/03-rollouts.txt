@@ -1,0 +1,23 @@
+# Ver o arquivo de deployment
+kubectl edit deployment nginx
+
+# Ver se a implantação terminou
+kubectl rollout status deployment/nginx
+
+# Ver o histórico
+kubectl rollout history deployment/nginx
+
+# Voltar para a versão anterior
+kubectl rollout undo deployment/nginx
+
+# Voltar para uma revisão específica
+kubectl rollout undo deployment/nginx --to-revision=2
+
+# Reiniciar os Pods do Deployment
+kubectl rollout restart deployment/nginx
+
+# Pausar um rollout
+kubectl rollout pause deployment/nginx
+
+# Continuar
+kubectl rollout resume deployment/nginx

@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx-development
+    environment: development
+  name: nginx
+  namespace: default
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: nginx-test
+  strategy:
+    rollingUpdate:
+      maxSurge: 100%
+      maxUnavailable: 0%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: nginx-test
+    spec:
+      containers:
+      - image: nginx
+        imagePullPolicy: Always
+        name: nginx
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+
+# To adjust the resources, can be used goldilocks to analyze the resource usage of the pods and recommend appropriate resource requests and limits.

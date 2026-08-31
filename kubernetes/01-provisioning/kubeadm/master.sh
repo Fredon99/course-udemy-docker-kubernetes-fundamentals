@@ -51,6 +51,10 @@ cp /etc/kubernetes/admin.conf /home/vagrant/.kube/config
 chown vagrant:vagrant /home/vagrant/.kube/config
 chmod 0600 /home/vagrant/.kube/config
 
+# -------------------------------------------------
+# Flannel
+# -------------------------------------------------
+
 log "Instalando Flannel ${FLANNEL_VERSION}..."
 kubectl apply -f "$FLANNEL_MANIFEST"
 
@@ -63,6 +67,29 @@ log "Forçando Flannel a usar a rede privada 192.168.56.x..."
 kubectl -n kube-flannel patch daemonset kube-flannel-ds --type='json' -p='[
   {"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--iface-regex=^192\\.168\\.56\\."}
 ]'
+
+# -------------------------------------------------
+# Metrics Server
+# -------------------------------------------------
+
+METRICS_SERVER_MANIFEST="https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml"
+
+log "Instalando Metrics Server..."
+kubectl apply -f "$METRICS_SERVER_MANIFEST"
+
+log "Configurando Metrics Server para o ambiente Vagrant..."
+kubectl -n kube-system patch deployment metrics-server --type='json' -p='[
+  {
+    "op": "add",
+    "path": "/spec/template/spec/containers/0/args/-",
+    "value": "--kubelet-insecure-tls"
+  }
+]'
+
+log "Aguardando Metrics Server ficar disponível..."
+kubectl rollout status deployment/metrics-server \
+  -n kube-system \
+  --timeout=300s
 
 log "Reiniciando kubelet após configuração final do runtime..."
 systemctl restart kubelet
